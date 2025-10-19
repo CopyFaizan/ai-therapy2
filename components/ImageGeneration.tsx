@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Spinner from './common/Spinner';
 import { generateArtFromFeelings } from '../services/geminiService';
@@ -8,6 +7,7 @@ interface ImageGenerationProps {
   prompt: string;
   onGenerated: (imageUrl: string) => void;
   onBack: () => void;
+  onApiKeyError: () => void;
 }
 
 const loadingMessages = [
@@ -18,7 +18,7 @@ const loadingMessages = [
     "Art is forming from the ether...",
 ];
 
-const ImageGeneration: React.FC<ImageGenerationProps> = ({ prompt, onGenerated, onBack }) => {
+const ImageGeneration: React.FC<ImageGenerationProps> = ({ prompt, onGenerated, onBack, onApiKeyError }) => {
   const [error, setError] = useState<string | null>(null);
   const [currentMessage, setCurrentMessage] = useState(loadingMessages[0]);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,19 +42,21 @@ const ImageGeneration: React.FC<ImageGenerationProps> = ({ prompt, onGenerated, 
         return;
       }
       try {
-        // FIX: Removed apiKey argument as it's now handled in the service.
         const imageUrl = await generateArtFromFeelings(prompt);
         onGenerated(imageUrl);
       } catch (e: any) {
-        // FIX: Simplified error handling as API key is no longer user-configurable.
-        setError(e.message || "An unknown error occurred.");
-        setIsLoading(false);
+        if (e.message && e.message.includes('Requested entity was not found')) {
+            onApiKeyError();
+        } else {
+            setError(e.message || "An unknown error occurred.");
+            setIsLoading(false);
+        }
       }
     };
     
     generateImage();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prompt, onGenerated]);
+  }, [prompt, onGenerated, onApiKeyError]);
 
   return (
     <div className="w-full max-w-xl text-center bg-white/50 backdrop-blur-lg p-8 rounded-2xl shadow-xl animate-fade-in">
@@ -69,7 +71,6 @@ const ImageGeneration: React.FC<ImageGenerationProps> = ({ prompt, onGenerated, 
         <>
           <h2 className="text-2xl font-bold text-red-600 mb-4">Oh no!</h2>
           <p className="text-gray-700 mb-6">{error}</p>
-          {/* FIX: Always show "Try Again" on error. */}
           <Button onClick={onBack} variant="secondary">Try Again</Button>
         </>
       )}
