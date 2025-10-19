@@ -1,11 +1,8 @@
-
 import { GoogleGenAI } from "@google/genai";
 
-// FIX: Removed apiKey parameter. API key is now sourced from environment variables.
-export const generateArtFromFeelings = async (feelings: string): Promise<string> => {
-    // FIX: Switched to standard initialization with environment variable for API key.
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
+export const generateArtFromFeelings = async (feelings: string): Promise<string> => {
     try {
         const fullPrompt = `Create a visually stunning, abstract therapeutic art piece that represents the following feeling or situation: "${feelings}". The style should be dreamlike and expressive, using a soft, calming color palette. Focus on textures and symbolic imagery rather than literal representation.`;
 
@@ -27,10 +24,7 @@ export const generateArtFromFeelings = async (feelings: string): Promise<string>
         }
     } catch (error) {
         console.error("Error generating image with Gemini API:", error);
-        // FIX: Updated error message to reflect API key is from environment configuration.
-        if (error instanceof Error && (error.message.toLowerCase().includes('api key'))) {
-             throw new Error("The API key is invalid or missing. Please check your environment configuration.");
-        }
-        throw new Error("Failed to create art. The connection to the creative muse seems to be lost. Please try again later.");
+        // Re-throw the original error to allow the UI to display a more specific message.
+        throw error;
     }
 };
